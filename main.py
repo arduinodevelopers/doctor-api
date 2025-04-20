@@ -3,5 +3,12 @@ from fastapi import FastAPI
 app = FastAPI()
 
 @app.get("/")
-async def root():
-    return {"greeting": "Hello, World!", "message": "Welcome to FastAPI!"}
+def root():
+    return {"message": "API aktif 🚀"}
+
+@app.get("/doktorlar")
+def doktor_listesi():
+    return [
+        {"id": 1, "ad": "Dr. Ayşe"},
+        {"id": 2, "ad": "Dr. Mehmet"}
+    ]
