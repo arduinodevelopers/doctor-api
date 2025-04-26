@@ -52,7 +52,7 @@ class Randevu(BaseModel):
 
 randevular = []
 
-@app.post("/randevu")
+@app.post("/randevular")
 def randevu_olustur(randevu: Randevu):
     randevu_kaydi = {
         "hasta_id": randevu.hasta_id,
