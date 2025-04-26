@@ -48,7 +48,7 @@ class Randevu(BaseModel):
     hasta_id: int
     doktor_id: int
     tarih: str  # ISO 8601 format
-    aciklama: str
+    not_: str
 
 randevular = []
 
@@ -58,7 +58,7 @@ def randevu_olustur(randevu: Randevu):
         "hasta_id": randevu.hasta_id,
         "doktor_id": randevu.doktor_id,
         "tarih": randevu.tarih,
-        "aciklama": randevu.aciklama,
+        "not_": randevu.not_,
         "olusturulma": datetime.now().isoformat()
     }
     randevular.append(randevu_kaydi)
