@@ -6,6 +6,7 @@ app = FastAPI()
 
 # Sahte veri tabanı
 hastalar = []
+randevular = []
 
 class Hasta(BaseModel):
     id: int
@@ -15,6 +16,12 @@ class Hasta(BaseModel):
     cinsiyet: str
     tani: str
 
+class Randevu(BaseModel):
+    hasta_id: int
+    doktor_id: int
+    tarih: str
+    not_: str
+
 @app.get("/")
 def root():
     return {"message": "API aktif 🚀"}
@@ -22,8 +29,8 @@ def root():
 @app.get("/doktorlar")
 def doktor_listesi():
     return [
-        {"id": 1, "ad": "Dr. ayse ozmen"},
-        {"id": 2, "ad": "Dr. Mehmet kulakli"}
+        {"id": 1, "ad": "Dr. Ayşe Özmen"},
+        {"id": 2, "ad": "Dr. Mehmet Kulaklı"}
     ]
 
 @app.post("/hastalar")
@@ -44,21 +51,13 @@ def hasta_ekle(hasta: Hasta):
 def hasta_listesi():
     return {"toplam": len(hastalar), "veriler": hastalar}
 
-class Randevu(BaseModel):
-    hasta_id: int
-    doktor_id: int
-    tarih: str  # ISO 8601 format
-    not_: str
-
-randevular = []
-
 @app.post("/randevular")
 def randevu_olustur(randevu: Randevu):
     randevu_kaydi = {
         "hasta_id": randevu.hasta_id,
         "doktor_id": randevu.doktor_id,
         "tarih": randevu.tarih,
-        "not_": randevu.not_,
+        "not": randevu.not_,
         "olusturulma": datetime.now().isoformat()
     }
     randevular.append(randevu_kaydi)
@@ -66,8 +65,8 @@ def randevu_olustur(randevu: Randevu):
 
 @app.get("/randevular/{hasta_id}")
 def hasta_randevulari(hasta_id: int):
-    hasta_randevular = [r for r in randevular if r["hasta_id"] == hasta_id]
-    return {"hasta_id": hasta_id, "randevu_sayisi": len(hasta_randevular), "randevular": hasta_randevular}
+    hasta_randevu_listesi = [r for r in randevular if r["hasta_id"] == hasta_id]
+    return {"hasta_id": hasta_id, "randevu_sayisi": len(hasta_randevu_listesi), "randevular": hasta_randevu_listesi}
 
 @app.get("/randevular")
 def tum_randevular():
