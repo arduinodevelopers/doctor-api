@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi import File, UploadFile
+from fastapi.staticfiles import StaticFiles
 import os
 from pydantic import BaseModel # type: ignore
 from datetime import datetime
@@ -88,3 +89,6 @@ async def upload_file(file: UploadFile = File(...)):
         "filename": file.filename,
         "url": f"https://doctor-api-production.up.railway.app/uploads/{file.filename}"
     }
+
+# Serve static files from the uploads directory
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
