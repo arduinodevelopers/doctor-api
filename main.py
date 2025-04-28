@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi import File, UploadFile
+import os
 from pydantic import BaseModel # type: ignore
 from datetime import datetime
 
@@ -71,3 +73,18 @@ def hasta_randevulari(hasta_id: int):
 @app.get("/randevular")
 def tum_randevular():
     return {"toplam_randevu": len(randevular), "randevular": randevular}
+
+
+# File upload support
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+@app.post("/uploadfile/")
+async def upload_file(file: UploadFile = File(...)):
+    file_location = os.path.join(UPLOAD_DIR, file.filename)
+    with open(file_location, "wb") as f:
+        f.write(await file.read())
+    return {
+        "filename": file.filename,
+        "url": f"https://doctor-api-production.up.railway.app/uploads/{file.filename}"
+    }
