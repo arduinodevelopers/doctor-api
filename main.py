@@ -20,8 +20,8 @@ class Hasta(BaseModel):
     tani: str
 
 class Randevu(BaseModel):
-    hasta_id: int
-    doktor_id: int
+    hasta_id: str
+    doktor_id: str
     tarih: str
     not_: str
 
