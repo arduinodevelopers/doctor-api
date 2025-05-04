@@ -67,7 +67,7 @@ def randevu_olustur(randevu: Randevu):
     return {"message": "Randevu oluşturuldu", "randevu": randevu_kaydi}
 
 @app.get("/randevular/{hasta_id}")
-def hasta_randevulari(hasta_id: int):
+def hasta_randevulari(hasta_id: str):
     hasta_randevu_listesi = [r for r in randevular if r["hasta_id"] == hasta_id]
     return {"hasta_id": hasta_id, "randevu_sayisi": len(hasta_randevu_listesi), "randevular": hasta_randevu_listesi}
 
