@@ -8,9 +8,7 @@ from fastapi import HTTPException, Depends
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Text, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-
-
-DATABASE_URL = "postgresql://postgres:wkIMmQPNgGvbwObTsQvbxtMBgoYmxuBZ@postgres.railway.internal:5432/railway"
+DATABASE_URL = os.getenv("POSTGRESQL_URL", "sqlite:///./test.db")
 print("Veritabanı bağlantısı:", repr(DATABASE_URL))
 
 engine = create_engine(DATABASE_URL)
