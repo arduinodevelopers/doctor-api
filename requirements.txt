@@ -11,7 +11,3 @@ sqlalchemy-mixins==1.4.0
 sqlalchemy-mixins[async]==1.4.0
 sqlalchemy-mixins[asyncio]==1.4.0
 sqlalchemy-mixins[asyncpg]==1.4.0
-sqlalchemy-mixins[asyncpg,asyncio]==1.4.0
-sqlalchemy-mixins[asyncpg,asyncio,postgresql]==1.4.0
-sqlalchemy-mixins[asyncpg,asyncio,postgresql,postgresql+asyncpg]==1.4.0
-sqlalchemy-mixins[asyncpg,asyncio,postgresql,postgresql+asyncpg,postgresql+asyncpg+asyncio]==1.4.0
