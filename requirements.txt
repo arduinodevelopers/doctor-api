@@ -5,3 +5,13 @@ uvicorn==0.23.2
 aiofiles==23.1.0
 pydantic==2.5.2
 sqlalchemy==2.0.20
+psycopg2-binary==2.9.6
+sqlalchemy-utils==0.37.8
+sqlalchemy-mixins==1.4.0
+sqlalchemy-mixins[async]==1.4.0
+sqlalchemy-mixins[asyncio]==1.4.0
+sqlalchemy-mixins[asyncpg]==1.4.0
+sqlalchemy-mixins[asyncpg,asyncio]==1.4.0
+sqlalchemy-mixins[asyncpg,asyncio,postgresql]==1.4.0
+sqlalchemy-mixins[asyncpg,asyncio,postgresql,postgresql+asyncpg]==1.4.0
+sqlalchemy-mixins[asyncpg,asyncio,postgresql,postgresql+asyncpg,postgresql+asyncpg+asyncio]==1.4.0
