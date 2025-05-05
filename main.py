@@ -5,8 +5,70 @@ import os
 from pydantic import BaseModel # type: ignore
 from datetime import datetime
 from fastapi import HTTPException
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Text, ForeignKey
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+
+DATABASE_URL = os.getenv("POSTGRESQL_URL", "sqlite:///./test.db")
+
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+class Doktor(Base):
+    __tablename__ = "doktorlar"
+    id = Column(String, primary_key=True, index=True)
+    ad = Column(String)
+    soyad = Column(String)
+    email = Column(String)
+    brans = Column(String)
+    universite = Column(String)
+    sehir = Column(String)
+    profil_foto = Column(Text)
+    created_at = Column(DateTime)
+
+class Hasta(Base):
+    __tablename__ = "hastalar"
+    id = Column(String, primary_key=True, index=True)
+    ad = Column(String)
+    soyad = Column(String)
+    email = Column(String)
+    cinsiyet = Column(String)
+    dogum_tarihi = Column(String)
+    sehir = Column(String)
+    profil_foto = Column(Text)
+    created_at = Column(DateTime)
+
+class Randevu(Base):
+    __tablename__ = "randevular"
+    id = Column(Integer, primary_key=True, index=True)
+    hasta_id = Column(String, ForeignKey("hastalar.id"))
+    doktor_id = Column(String, ForeignKey("doktorlar.id"))
+    tarih = Column(String)
+    not_ = Column(Text)
+    onayli = Column(Boolean, default=False)
+    olusturulma = Column(DateTime)
+
+class HastaDosya(Base):
+    __tablename__ = "hasta_dosyalari"
+    id = Column(Integer, primary_key=True, index=True)
+    hasta_id = Column(String, ForeignKey("hastalar.id"))
+    dosya_url = Column(Text)
+    dosya_adi = Column(String)
+    tur = Column(String)
+    eklenme_tarihi = Column(DateTime)
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 # Sahte veri tabanı
 hastalar = []
