@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 import os
 from pydantic import BaseModel # type: ignore
 from datetime import datetime
+from fastapi import HTTPException
 
 app = FastAPI()
 
@@ -61,7 +62,8 @@ def randevu_olustur(randevu: Randevu):
         "doktor_id": randevu.doktor_id,
         "tarih": randevu.tarih,
         "not": randevu.not_,
-        "olusturulma": datetime.now().isoformat()
+        "olusturulma": datetime.now().isoformat(),
+        "onayli": False
     }
     randevular.append(randevu_kaydi)
     return {"message": "Randevu oluşturuldu", "randevu": randevu_kaydi}
@@ -75,6 +77,22 @@ def hasta_randevulari(hasta_id: str):
 def tum_randevular():
     return {"toplam_randevu": len(randevular), "randevular": randevular}
 
+@app.patch("/randevular/onayla")
+def randevu_onayla(payload: dict):
+    doktor_id = payload.get("doktor_id")
+    hasta_id = payload.get("hasta_id")
+    tarih = payload.get("tarih")
+
+    for r in randevular:
+        if (
+            r["doktor_id"] == doktor_id and
+            r["hasta_id"] == hasta_id and
+            r["tarih"] == tarih
+        ):
+            r["onayli"] = True
+            return {"message": "Randevu onaylandı", "randevu": r}
+    
+    raise HTTPException(status_code=404, detail="Randevu bulunamadı")
 
 # File upload support
 UPLOAD_DIR = "uploads"
