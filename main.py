@@ -4,15 +4,16 @@ from fastapi.staticfiles import StaticFiles
 import os
 from pydantic import BaseModel # type: ignore
 from datetime import datetime
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Text, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 
 
-DATABASE_URL = os.getenv("POSTGRESQL_URL", "sqlite:///./test.db")
+DATABASE_URL = "postgresql://postgres:wkIMmQPNgGvbwObTsQvbxtMBgoYmxuBZ@postgres.railway.internal:5432/railway"
+print("Veritabanı bağlantısı:", repr(DATABASE_URL))
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {})
+engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -70,19 +71,16 @@ def get_db():
     finally:
         db.close()
 
-# Sahte veri tabanı
-hastalar = []
-randevular = []
-
-class Hasta(BaseModel):
-    id: int
+class HastaCreate(BaseModel):
+    id: str
     ad: str
     soyad: str
-    yas: int
+    email: str
     cinsiyet: str
-    tani: str
+    dogum_tarihi: str
+    sehir: str
 
-class Randevu(BaseModel):
+class RandevuCreate(BaseModel):
     hasta_id: str
     doktor_id: str
     tarih: str
@@ -100,61 +98,132 @@ def doktor_listesi():
     ]
 
 @app.post("/hastalar")
-def hasta_ekle(hasta: Hasta):
-    yeni_hasta = {
-        "id": hasta.id,
-        "ad": hasta.ad,
-        "soyad": hasta.soyad,
-        "yas": hasta.yas,
-        "cinsiyet": hasta.cinsiyet,
-        "tani": hasta.tani,
-        "eklenme_tarihi": datetime.now().isoformat()
-    }
-    hastalar.append(yeni_hasta)
-    return {"message": "Hasta başarıyla eklendi", "hasta": yeni_hasta}
+def hasta_ekle(hasta: HastaCreate, db: Session = Depends(get_db)):
+    db_hasta = db.query(Hasta).filter(Hasta.id == hasta.id).first()
+    if db_hasta:
+        raise HTTPException(status_code=400, detail="Hasta zaten mevcut")
+    yeni_hasta = Hasta(
+        id=hasta.id,
+        ad=hasta.ad,
+        soyad=hasta.soyad,
+        email=hasta.email,
+        cinsiyet=hasta.cinsiyet,
+        dogum_tarihi=hasta.dogum_tarihi,
+        sehir=hasta.sehir,
+        created_at=datetime.now()
+    )
+    db.add(yeni_hasta)
+    db.commit()
+    db.refresh(yeni_hasta)
+    return {"message": "Hasta başarıyla eklendi", "hasta": {
+        "id": yeni_hasta.id,
+        "ad": yeni_hasta.ad,
+        "soyad": yeni_hasta.soyad,
+        "email": yeni_hasta.email,
+        "cinsiyet": yeni_hasta.cinsiyet,
+        "dogum_tarihi": yeni_hasta.dogum_tarihi,
+        "sehir": yeni_hasta.sehir,
+        "created_at": yeni_hasta.created_at.isoformat()
+    }}
 
 @app.get("/hastalar")
-def hasta_listesi():
-    return {"toplam": len(hastalar), "veriler": hastalar}
+def hasta_listesi(db: Session = Depends(get_db)):
+    hastalar = db.query(Hasta).all()
+    result = []
+    for h in hastalar:
+        result.append({
+            "id": h.id,
+            "ad": h.ad,
+            "soyad": h.soyad,
+            "email": h.email,
+            "cinsiyet": h.cinsiyet,
+            "dogum_tarihi": h.dogum_tarihi,
+            "sehir": h.sehir,
+            "created_at": h.created_at.isoformat() if h.created_at else None
+        })
+    return {"toplam": len(result), "veriler": result}
 
 @app.post("/randevular")
-def randevu_olustur(randevu: Randevu):
-    randevu_kaydi = {
-        "hasta_id": randevu.hasta_id,
-        "doktor_id": randevu.doktor_id,
-        "tarih": randevu.tarih,
-        "not": randevu.not_,
-        "olusturulma": datetime.now().isoformat(),
-        "onayli": False
-    }
-    randevular.append(randevu_kaydi)
-    return {"message": "Randevu oluşturuldu", "randevu": randevu_kaydi}
+def randevu_olustur(randevu: RandevuCreate, db: Session = Depends(get_db)):
+    yeni_randevu = Randevu(
+        hasta_id=randevu.hasta_id,
+        doktor_id=randevu.doktor_id,
+        tarih=randevu.tarih,
+        not_=randevu.not_,
+        olusturulma=datetime.now(),
+        onayli=False
+    )
+    db.add(yeni_randevu)
+    db.commit()
+    db.refresh(yeni_randevu)
+    return {"message": "Randevu oluşturuldu", "randevu": {
+        "id": yeni_randevu.id,
+        "hasta_id": yeni_randevu.hasta_id,
+        "doktor_id": yeni_randevu.doktor_id,
+        "tarih": yeni_randevu.tarih,
+        "not": yeni_randevu.not_,
+        "olusturulma": yeni_randevu.olusturulma.isoformat(),
+        "onayli": yeni_randevu.onayli
+    }}
 
 @app.get("/randevular/{hasta_id}")
-def hasta_randevulari(hasta_id: str):
-    hasta_randevu_listesi = [r for r in randevular if r["hasta_id"] == hasta_id]
-    return {"hasta_id": hasta_id, "randevu_sayisi": len(hasta_randevu_listesi), "randevular": hasta_randevu_listesi}
+def hasta_randevulari(hasta_id: str, db: Session = Depends(get_db)):
+    randevular = db.query(Randevu).filter(Randevu.hasta_id == hasta_id).all()
+    result = []
+    for r in randevular:
+        result.append({
+            "id": r.id,
+            "hasta_id": r.hasta_id,
+            "doktor_id": r.doktor_id,
+            "tarih": r.tarih,
+            "not": r.not_,
+            "onayli": r.onayli,
+            "olusturulma": r.olusturulma.isoformat() if r.olusturulma else None
+        })
+    return {"hasta_id": hasta_id, "randevu_sayisi": len(result), "randevular": result}
 
 @app.get("/randevular")
-def tum_randevular():
-    return {"toplam_randevu": len(randevular), "randevular": randevular}
+def tum_randevular(db: Session = Depends(get_db)):
+    randevular = db.query(Randevu).all()
+    result = []
+    for r in randevular:
+        result.append({
+            "id": r.id,
+            "hasta_id": r.hasta_id,
+            "doktor_id": r.doktor_id,
+            "tarih": r.tarih,
+            "not": r.not_,
+            "onayli": r.onayli,
+            "olusturulma": r.olusturulma.isoformat() if r.olusturulma else None
+        })
+    return {"toplam_randevu": len(result), "randevular": result}
 
 @app.patch("/randevular")
-def randevu_guncelle(payload: dict):
+def randevu_guncelle(payload: dict, db: Session = Depends(get_db)):
     doktor_id = payload.get("doktor_id")
     hasta_id = payload.get("hasta_id")
     tarih = payload.get("tarih")
     onayli = payload.get("onayli")
 
-    for r in randevular:
-        if (
-            r["doktor_id"] == doktor_id and
-            r["hasta_id"] == hasta_id and
-            r["tarih"] == tarih
-        ):
-            r["onayli"] = onayli
-            return {"success": True, "randevu": r}
-    raise HTTPException(status_code=404, detail="Randevu bulunamadı")
+    r = db.query(Randevu).filter(
+        Randevu.doktor_id == doktor_id,
+        Randevu.hasta_id == hasta_id,
+        Randevu.tarih == tarih
+    ).first()
+    if not r:
+        raise HTTPException(status_code=404, detail="Randevu bulunamadı")
+    r.onayli = onayli
+    db.commit()
+    db.refresh(r)
+    return {"success": True, "randevu": {
+        "id": r.id,
+        "hasta_id": r.hasta_id,
+        "doktor_id": r.doktor_id,
+        "tarih": r.tarih,
+        "not": r.not_,
+        "onayli": r.onayli,
+        "olusturulma": r.olusturulma.isoformat() if r.olusturulma else None
+    }}
 
 # File upload support
 UPLOAD_DIR = "uploads"
