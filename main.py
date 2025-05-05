@@ -77,11 +77,12 @@ def hasta_randevulari(hasta_id: str):
 def tum_randevular():
     return {"toplam_randevu": len(randevular), "randevular": randevular}
 
-@app.patch("/randevular/onayla")
-def randevu_onayla(payload: dict):
+@app.patch("/randevular")
+def randevu_guncelle(payload: dict):
     doktor_id = payload.get("doktor_id")
     hasta_id = payload.get("hasta_id")
     tarih = payload.get("tarih")
+    onayli = payload.get("onayli")
 
     for r in randevular:
         if (
@@ -89,9 +90,8 @@ def randevu_onayla(payload: dict):
             r["hasta_id"] == hasta_id and
             r["tarih"] == tarih
         ):
-            r["onayli"] = True
-            return {"message": "Randevu onaylandı", "randevu": r}
-    
+            r["onayli"] = onayli
+            return {"success": True, "randevu": r}
     raise HTTPException(status_code=404, detail="Randevu bulunamadı")
 
 # File upload support
