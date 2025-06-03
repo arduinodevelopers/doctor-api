@@ -8,6 +8,3 @@ sqlalchemy==2.0.20
 psycopg2-binary==2.9.6
 sqlalchemy-utils==0.37.8
 sqlalchemy-mixins==1.4.0
-sqlalchemy-mixins[async]==1.4.0
-sqlalchemy-mixins[asyncio]==1.4.0
-sqlalchemy-mixins[asyncpg]==1.4.0
