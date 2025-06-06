@@ -36,6 +36,11 @@ class Hasta(Base):
     cinsiyet = Column(String)
     dogum_tarihi = Column(String)
     sehir = Column(String)
+    adres = Column(String)
+    tc_kimlik_no = Column(String)
+    kan_grubu = Column(String)
+    ilaclar = Column(Text)
+    not_ = Column(Text)
     profil_foto = Column(Text)
     created_at = Column(DateTime)
 
@@ -69,7 +74,8 @@ def get_db():
     finally:
         db.close()
 
-class HastaCreate(BaseModel):
+
+class YeniHastaKayit(BaseModel):
     id: str
     ad: str
     soyad: str
@@ -77,6 +83,11 @@ class HastaCreate(BaseModel):
     cinsiyet: str
     dogum_tarihi: str
     sehir: str
+    adres: str
+    tc_kimlik_no: str
+    kan_grubu: str
+    ilaclar: str
+    not_: str
 
 class RandevuCreate(BaseModel):
     hasta_id: str
@@ -95,8 +106,9 @@ def doktor_listesi():
         {"id": 2, "ad": "Dr. Mehmet Kulaklı"}
     ]
 
-@app.post("/hastalar")
-def hasta_ekle(hasta: HastaCreate, db: Session = Depends(get_db)):
+
+@app.post("/hasta_kayit")
+def hasta_kayit(hasta: YeniHastaKayit, db: Session = Depends(get_db)):
     db_hasta = db.query(Hasta).filter(Hasta.id == hasta.id).first()
     if db_hasta:
         raise HTTPException(status_code=400, detail="Hasta zaten mevcut")
@@ -108,21 +120,17 @@ def hasta_ekle(hasta: HastaCreate, db: Session = Depends(get_db)):
         cinsiyet=hasta.cinsiyet,
         dogum_tarihi=hasta.dogum_tarihi,
         sehir=hasta.sehir,
+        adres=hasta.adres,
+        tc_kimlik_no=hasta.tc_kimlik_no,
+        kan_grubu=hasta.kan_grubu,
+        ilaclar=hasta.ilaclar,
+        not_=hasta.not_,
         created_at=datetime.now()
     )
     db.add(yeni_hasta)
     db.commit()
     db.refresh(yeni_hasta)
-    return {"message": "Hasta başarıyla eklendi", "hasta": {
-        "id": yeni_hasta.id,
-        "ad": yeni_hasta.ad,
-        "soyad": yeni_hasta.soyad,
-        "email": yeni_hasta.email,
-        "cinsiyet": yeni_hasta.cinsiyet,
-        "dogum_tarihi": yeni_hasta.dogum_tarihi,
-        "sehir": yeni_hasta.sehir,
-        "created_at": yeni_hasta.created_at.isoformat()
-    }}
+    return {"message": "Hasta başarıyla kaydedildi", "hasta_id": yeni_hasta.id}
 
 @app.get("/hastalar")
 def hasta_listesi(db: Session = Depends(get_db)):
@@ -237,5 +245,30 @@ async def upload_file(file: UploadFile = File(...)):
         "url": f"https://doctor-api-production.up.railway.app/uploads/{file.filename}"
     }
 
-# Serve static files from the uploads directory
+
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+@app.post("/hasta_kayit")
+def hasta_kayit(hasta: YeniHastaKayit, db: Session = Depends(get_db)):
+    db_hasta = db.query(Hasta).filter(Hasta.id == hasta.id).first()
+    if db_hasta:
+        raise HTTPException(status_code=400, detail="Hasta zaten mevcut")
+    yeni_hasta = Hasta(
+        id=hasta.id,
+        ad=hasta.ad,
+        soyad=hasta.soyad,
+        email=hasta.email,
+        cinsiyet=hasta.cinsiyet,
+        dogum_tarihi=hasta.dogum_tarihi,
+        sehir=hasta.sehir,
+        adres=hasta.adres,
+        tc_kimlik_no=hasta.tc_kimlik_no,
+        kan_grubu=hasta.kan_grubu,
+        ilaclar=hasta.ilaclar,
+        not_=hasta.not_,
+        created_at=datetime.now()
+    )
+    db.add(yeni_hasta)
+    db.commit()
+    db.refresh(yeni_hasta)
+    return {"message": "Hasta başarıyla kaydedildi", "hasta_id": yeni_hasta.id}
