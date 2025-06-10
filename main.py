@@ -66,6 +66,15 @@ class HastaDosya(Base):
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+class YeniDoktorKayit(BaseModel):
+    id: str
+    ad: str
+    soyad: str
+    email: str
+    brans: str
+    universite: str
+    sehir: str
+    profil_foto: str = ""
 
 def get_db():
     db = SessionLocal()
@@ -100,11 +109,44 @@ def root():
     return {"message": "API aktif 🚀"}
 
 @app.get("/doktorlar")
-def doktor_listesi():
+def doktor_listesi(db: Session = Depends(get_db)):
+    doktorlar = db.query(Doktor).all()
     return [
-        {"id": 1, "ad": "Dr. Ayşe Özmen"},
-        {"id": 2, "ad": "Dr. Mehmet Kulaklı"}
+        {
+            "id": d.id,
+            "ad": d.ad,
+            "soyad": d.soyad,
+            "email": d.email,
+            "brans": d.brans,
+            "universite": d.universite,
+            "sehir": d.sehir,
+            "profil_foto": d.profil_foto,
+            "created_at": d.created_at.isoformat() if d.created_at else None
+        } for d in doktorlar
     ]
+
+
+# Doktor kayıt endpointi
+@app.post("/doktor_kayit")
+def doktor_kayit(doktor: YeniDoktorKayit, db: Session = Depends(get_db)):
+    db_doktor = db.query(Doktor).filter(Doktor.id == doktor.id).first()
+    if db_doktor:
+        raise HTTPException(status_code=400, detail="Doktor zaten mevcut")
+    yeni_doktor = Doktor(
+        id=doktor.id,
+        ad=doktor.ad,
+        soyad=doktor.soyad,
+        email=doktor.email,
+        brans=doktor.brans,
+        universite=doktor.universite,
+        sehir=doktor.sehir,
+        profil_foto=doktor.profil_foto,
+        created_at=datetime.now()
+    )
+    db.add(yeni_doktor)
+    db.commit()
+    db.refresh(yeni_doktor)
+    return {"message": "Doktor başarıyla kaydedildi", "doktor_id": yeni_doktor.id}
 
 
 @app.post("/hasta_kayit")
